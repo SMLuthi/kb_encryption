@@ -82,5 +82,23 @@ class EncrypterTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 'NotFound')
         self.assertEqual(data['error_msg'], 'User not found')
 
+    def test_delete_user(self):
+        '''
+        Test deleting a user from memory
+        '''
+        self.app.post('/keys/deleteUser')
+        rv = self.app.delete('/keys/deleteUser')
+        assert rv.status_code == 204
+
+    def test_delete_dne_user(self):
+        '''
+        Test deleting a non-existent user
+        '''
+        rv = self.app.delete('/keys/dneUser')
+        assert rv.status_code == 404
+        data = json.loads(rv.data)
+        self.assertEqual(data['error'], 'NotFound')
+        self.assertEqual(data['error_msg'], 'User not found')
+
 if __name__ == '__main__':
     unittest.main()

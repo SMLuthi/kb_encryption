@@ -59,7 +59,13 @@ def gen_key(username):
 # Delete user data endpoint
 @app.route('/keys/<string:username>', methods=['DELETE'])
 def del_user(username):
-    abort(503)
+    # Search in memory for existing user data
+    search = searcher(username)
+    if len(search) == 0:
+        abort(404)
+
+    user_list.remove(search[0])
+    return '', 204
 
 if __name__ == '__main__':
     app.run(debug=True)
