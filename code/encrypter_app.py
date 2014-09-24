@@ -7,11 +7,7 @@ import datetime
 app = Flask(__name__)
 
 # Data structure to mock back end environment
-user_list = []
-
-
-def searcher(username):
-    return filter(lambda u: u['user'] == username, user_list)
+user_list = {}
 
 
 @app.errorhandler(404)
@@ -29,42 +25,37 @@ def duplicate_entry(error):
 # Retrieve user data endpoint
 @app.route('/keys/<string:username>', methods=['GET'])
 def get_key(username):
-    # Search users to avoid generating duplicate user entries
-    search = searcher(username)
-    if len(search) == 0:
+    # Search users to retrieve user info
+    if username not in user_list:
         abort(404)
-    return jsonify({'search_result': search[0]})
+    return jsonify({'search_result': user_list[username]})
 
 
 # Add new user data endpoint
 @app.route('/keys/<string:username>', methods=['POST'])
 def gen_key(username):
     # Search users to avoid generating duplicate user entries
-    search = searcher(username)
-    if len(search) != 0:
+    if username in user_list:
         abort(409)
 
     # Generate a new user entry with a random 16 digit hex string and timestamp
-    new_user = {
+    user_list[username] = {
         'user': username,
         'secret_key': binascii.b2a_hex(os.urandom(8)),
         'created_on': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
     }
 
-    user_list.append(new_user)
-
-    return jsonify({'new_user': new_user}), 201
+    return jsonify({'new_user': user_list[username]}), 201
 
 
 # Delete user data endpoint
 @app.route('/keys/<string:username>', methods=['DELETE'])
 def del_user(username):
     # Search in memory for existing user data
-    search = searcher(username)
-    if len(search) == 0:
+    if username not in user_list:
         abort(404)
 
-    user_list.remove(search[0])
+    del user_list[username]
     return '', 204
 
 if __name__ == '__main__':
