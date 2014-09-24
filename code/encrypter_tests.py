@@ -60,5 +60,27 @@ class EncrypterTestCase(unittest.TestCase):
         self.assertIsNotNone(data['secret_key'])
         self.assertIsNotNone(data['created_on'])
 
+    def test_retrieve_user(self):
+        '''
+        Test retrieval of user data
+        '''
+        self.app.post('/keys/retrieveUser')
+        rv = self.app.get('/keys/retrieveUser')
+        assert rv.status_code == 200
+        data = json.loads(rv.data)['search_result']
+        self.assertEqual(data['user'], 'retrieveUser')
+        self.assertIsNotNone(data['secret_key'])
+        self.assertIsNotNone(data['created_on'])
+
+    def test_retrive_dne_user(self):
+        '''
+        Test response when retrieving user that does not exist
+        '''
+        rv = self.app.get('/keys/dneUser')
+        assert rv.status_code == 404
+        data = json.loads(rv.data)
+        self.assertEqual(data['error'], 'NotFound')
+        self.assertEqual(data['error_msg'], 'User not found')
+
 if __name__ == '__main__':
     unittest.main()

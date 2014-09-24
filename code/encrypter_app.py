@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, make_response
 import os
 import binascii
 import datetime
@@ -10,10 +10,20 @@ app = Flask(__name__)
 user_list = []
 
 
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'NotFound',
+                                  'error_msg': 'User not found'}), 404)
+
+
 # Retrieve user data endpoint
 @app.route('/keys/<string:username>', methods=['GET'])
 def get_key(username):
-    abort(503)
+    # Search users to avoid generating duplicate user entries
+    search = filter(lambda u: u['user'] == username, user_list)
+    if len(search) == 0:
+        abort(404)
+    return jsonify({'search_result': search[0]})
 
 
 # Add new user data endpoint
