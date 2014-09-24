@@ -10,17 +10,27 @@ app = Flask(__name__)
 user_list = []
 
 
+def searcher(username):
+    return filter(lambda u: u['user'] == username, user_list)
+
+
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'NotFound',
                                   'error_msg': 'User not found'}), 404)
 
 
+@app.errorhandler(409)
+def duplicate_entry(error):
+    return make_response(jsonify({'error': 'DuplicateEntry',
+                                  'error_msg': 'Username already exists'}), 409)
+
+
 # Retrieve user data endpoint
 @app.route('/keys/<string:username>', methods=['GET'])
 def get_key(username):
     # Search users to avoid generating duplicate user entries
-    search = filter(lambda u: u['user'] == username, user_list)
+    search = searcher(username)
     if len(search) == 0:
         abort(404)
     return jsonify({'search_result': search[0]})
@@ -30,7 +40,7 @@ def get_key(username):
 @app.route('/keys/<string:username>', methods=['POST'])
 def gen_key(username):
     # Search users to avoid generating duplicate user entries
-    search = filter(lambda u: u['user'] == username, user_list)
+    search = searcher(username)
     if len(search) != 0:
         abort(409)
 
