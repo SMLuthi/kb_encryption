@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from encrypter_app import app
+from flask import json
 import unittest
 
 
@@ -19,6 +20,45 @@ class EncrypterTestCase(unittest.TestCase):
         '''
         rv = self.app.get('/random')
         assert rv.status_code == 404
+
+    def test_enter_new_user(self):
+        '''
+        Test generic user creation
+        '''
+        rv = self.app.post('/keys/testUser')
+        assert rv.status_code == 201
+        data = json.loads(rv.data)['new_user']
+        self.assertEqual(data['user'], 'testUser')
+        self.assertIsNotNone(data['secret_key'])
+        self.assertIsNotNone(data['created_on'])
+
+    def test_enter_multiple_users(self):
+        '''
+        Test creation of multiple users back-to-back
+        '''
+        rv1 = self.app.post('/keys/multiUser1')
+        rv2 = self.app.post('/keys/multiUser2')
+        assert rv1.status_code == 201 and rv2.status_code == 201
+        data = json.loads(rv1.data)['new_user']
+        self.assertEqual(data['user'], 'multiUser1')
+        self.assertIsNotNone(data['secret_key'])
+        self.assertIsNotNone(data['created_on'])
+        data = json.loads(rv2.data)['new_user']
+        self.assertEqual(data['user'], 'multiUser2')
+        self.assertIsNotNone(data['secret_key'])
+        self.assertIsNotNone(data['created_on'])
+
+    def test_duplicate_user(self):
+        '''
+        Test response when entering duplicate users
+        '''
+        rv1 = self.app.post('/keys/dupliUser')
+        rv2 = self.app.post('/keys/dupliUser')
+        assert rv1.status_code == 201 and rv2.status_code == 409
+        data = json.loads(rv1.data)['new_user']
+        self.assertEqual(data['user'], 'dupliUser')
+        self.assertIsNotNone(data['secret_key'])
+        self.assertIsNotNone(data['created_on'])
 
 if __name__ == '__main__':
     unittest.main()

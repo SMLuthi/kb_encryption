@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-from flask import Flask, abort
+from flask import Flask, abort, jsonify
+import os
+import binascii
+import datetime
 
 app = Flask(__name__)
 
@@ -16,7 +19,21 @@ def get_key(username):
 # Add new user data endpoint
 @app.route('/keys/<string:username>', methods=['POST'])
 def gen_key(username):
-    abort(503)
+    # Search users to avoid generating duplicate user entries
+    search = filter(lambda u: u['user'] == username, user_list)
+    if len(search) != 0:
+        abort(409)
+
+    # Generate a new user entry with a random 16 digit hex string and timestamp
+    new_user = {
+        'user': username,
+        'secret_key': binascii.b2a_hex(os.urandom(8)),
+        'created_on': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    user_list.append(new_user)
+
+    return jsonify({'new_user': new_user}), 201
 
 
 # Delete user data endpoint
